@@ -1,179 +1,376 @@
 # 🚀 Microservices Architecture - ENSET Mohammadia
 
-[![Java](https://img.shields.io/badge/Java-17+-orange.svg)](https://www.oracle.com/java/)
+[![Java](https://img.shields.io/badge/Java-21-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.6-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.0.0-blue.svg)](https://spring.io/projects/spring-cloud)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
-> A comprehensive repository for learning and implementing microservices architecture patterns and best practices.
-> Course: Systèmes Parallèles et Distribués - ENSET Mohammadia (S3)
+> A comprehensive microservices architecture project implementing industry-standard patterns and best practices.
+> Course: Systèmes Parallèles et Distribués - ENSET Mohammadia
 
 ## 📚 Table of Contents
 
 - [Overview](#-overview)
-- [Repository Structure](#-repository-structure)
+- [Architecture](#-architecture)
 - [Microservices](#-microservices)
-- [Architecture Patterns](#-architecture-patterns)
+- [Infrastructure Services](#-infrastructure-services)
 - [Technology Stack](#-technology-stack)
 - [Getting Started](#-getting-started)
-- [Best Practices](#-best-practices)
-- [Development Guidelines](#-development-guidelines)
+- [Architecture Patterns](#-architecture-patterns)
+- [Configuration Management](#-configuration-management)
 - [API Documentation](#-api-documentation)
-- [Testing](#-testing)
-- [Contributing](#-contributing)
+- [Best Practices](#-best-practices)
 - [Resources](#-resources)
 
 ## 🎯 Overview
 
-This repository contains all microservices implementations and labs developed during the Microservices Architecture course at ENSET Mohammadia. Each microservice is designed following industry best practices and demonstrates different aspects of microservices architecture.
+This repository contains a complete microservices ecosystem built with Spring Boot and Spring Cloud. The project demonstrates enterprise-grade microservices architecture with service discovery, centralized configuration, API gateway, and inter-service communication using REST APIs and OpenFeign.
 
 ### Learning Objectives
 - ✅ Understand microservices architecture principles
-- ✅ Implement REST and GraphQL APIs
-- ✅ Apply Domain-Driven Design (DDD) patterns
-- ✅ Master inter-service communication
-- ✅ Implement service discovery and API Gateway patterns
-- ✅ Handle distributed data management
-- ✅ Apply resilience and fault tolerance patterns
-- ✅ Implement observability and monitoring
+- ✅ Implement service discovery with Eureka
+- ✅ Centralized configuration management with Config Server
+- ✅ API Gateway pattern with Spring Cloud Gateway
+- ✅ Inter-service communication with OpenFeign
+- ✅ Database per service pattern
+- ✅ REST API development with Spring Data REST
+- ✅ HATEOAS implementation
+- ✅ Monitoring and health checks with Actuator
+
+## 🏗️ Architecture
+
+The project follows a microservices architecture pattern with the following components:
+
+```
+┌─────────────┐
+│   Clients   │
+└──────┬──────┘
+       │
+       ▼
+┌─────────────────────────────────┐
+│   Gateway Service (Port 8888)   │ ◄── API Gateway Pattern
+└────────┬────────────────────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+┌──────────────────────────────────────────────────┐
+│    Discovery Service - Eureka (Port 8761)        │ ◄── Service Registry
+└──────────────────────────────────────────────────┘
+         ▲         ▲         ▲         ▲
+         │         │         │         │
+    ┌────┴───┬─────┴────┬────┴────┬────┴─────┐
+    │        │          │         │          │
+┌───┴───┐ ┌──┴──┐ ┌─────┴────┐ ┌──┴──────┐ ┌┴────────┐
+│Customer│ │Inven│ │ Billing  │ │ Config  │ │  Config │
+│Service │ │tory │ │ Service  │ │ Service │ │  Repo   │
+│  8082  │ │8083 │ │   8084   │ │  9999   │ │ (GitHub)│
+└────────┘ └─────┘ └──────────┘ └─────────┘ └─────────┘
+     │        │          │
+     ▼        ▼          ▼
+  [H2 DB]  [H2 DB]   [H2 DB]      ◄── Database per Service
+```
 
 ## 📁 Repository Structure
 
 ```
 microservices/
 ├── README.md                          # This file
-├── bank-account-service/              # Bank account management microservice
-├── [future-service-1]/                # To be added in future labs
-├── [future-service-2]/                # To be added in future labs
-├── api-gateway/                       # API Gateway (upcoming)
-├── service-discovery/                 # Service Registry (upcoming)
-├── config-server/                     # Centralized Configuration (upcoming)
-└── docs/                              # Additional documentation
+├── pom.xml                            # Parent POM
+├── config-repo/                       # Configuration repository
+│   ├── application.properties         # Global configuration
+│   ├── customer-service.properties    # Customer service config
+│   ├── inventory-service.properties   # Inventory service config
+│   ├── billing-service.properties     # Billing service config
+│   ├── gateway-service.properties     # Gateway service config
+│   ├── *-dev.properties              # Dev environment configs
+│   └── *-prod.properties             # Prod environment configs
+├── discovery-service/                 # Eureka Server (Port 8761)
+├── config-service/                    # Config Server (Port 9999)
+├── gateway-service/                   # API Gateway (Port 8888)
+├── customer-service/                  # Customer microservice (Port 8082)
+├── inventory-service/                 # Product inventory (Port 8083)
+└── billing-service/                   # Billing & invoicing (Port 8084)
 ```
 
-### Service Structure Convention
+## 🔧 Infrastructure Services
 
-Each microservice follows a standardized structure:
+### 1. Discovery Service (Eureka Server)
+**Port:** 8761 | **Status:** ✅ Running
 
-```
-service-name/
-├── src/
-│   ├── main/
-│   │   ├── java/
-│   │   │   └── ma/enset/[service]/
-│   │   │       ├── entities/          # Domain models (JPA entities)
-│   │   │       ├── dtos/              # Data Transfer Objects
-│   │   │       ├── repositories/      # Data access layer
-│   │   │       ├── services/          # Business logic
-│   │   │       ├── mappers/           # Entity-DTO converters
-│   │   │       ├── web/               # Controllers (REST/GraphQL)
-│   │   │       ├── exceptions/        # Custom exceptions & handlers
-│   │   │       ├── enums/             # Enumerations
-│   │   │       └── config/            # Configuration classes
-│   │   └── resources/
-│   │       ├── application.properties # Configuration
-│   │       ├── graphql/               # GraphQL schemas (if applicable)
-│   │       └── db/migration/          # Database migrations (Flyway/Liquibase)
-│   └── test/                          # Unit and integration tests
-├── pom.xml                            # Maven dependencies
-├── Dockerfile                         # Container image definition
-├── docker-compose.yml                 # Local deployment setup
-└── README.md                          # Service-specific documentation
-```
-
-## 🏗️ Microservices
-
-### 1. Bank Account Service
-**Status:** ✅ Completed | **Port:** 8081
-
-A microservice for managing bank accounts with REST and GraphQL APIs.
+Netflix Eureka service registry for dynamic service discovery.
 
 **Features:**
-- CRUD operations for bank accounts
-- Customer management
-- Multiple account types (Current, Savings)
-- REST API endpoints
-- GraphQL API with queries and mutations
+- Service registration and discovery
+- Health monitoring
+- Load balancing support
+- Self-preservation mode
+- Dashboard UI
+
+**Key Dependencies:**
+- `spring-cloud-starter-netflix-eureka-server`
+
+**Configuration:**
+```properties
+spring.application.name=discovery-service
+server.port=8761
+eureka.client.fetch-registry=false
+eureka.client.register-with-eureka=false
+```
+
+**Access:** http://localhost:8761
+
+---
+
+### 2. Config Service (Spring Cloud Config Server)
+**Port:** 9999 | **Status:** ✅ Running
+
+Centralized configuration management server.
+
+**Features:**
+- Externalized configuration
+- Environment-specific configs (dev, prod)
+- Git-based configuration repository
+- Dynamic configuration refresh
+- Encryption/Decryption support
+
+**Key Dependencies:**
+- `spring-cloud-config-server`
+- `spring-cloud-starter-netflix-eureka-client`
+
+**Configuration:**
+```properties
+spring.application.name=config-service
+server.port=9999
+spring.cloud.config.server.git.uri=https://github.com/OtmaneTouhami/microservices-config-repo
+```
+
+**Config Repository:** https://github.com/OtmaneTouhami/microservices-config-repo
+
+---
+
+### 3. Gateway Service (Spring Cloud Gateway)
+**Port:** 8888 | **Status:** ✅ Running
+
+API Gateway for routing and cross-cutting concerns.
+
+**Features:**
+- Request routing
+- Load balancing
+- Circuit breaker integration (future)
+- Rate limiting (future)
+- Authentication/Authorization (future)
+- Request/Response transformation
+
+**Key Dependencies:**
+- `spring-cloud-starter-gateway-server-webflux`
+- `spring-cloud-starter-netflix-eureka-client`
+- `spring-cloud-starter-config`
+
+**Configuration:**
+```properties
+spring.application.name=gateway-service
+server.port=8888
+spring.config.import=optional:configserver:http://localhost:9999
+```
+
+---
+
+## 📦 Microservices
+
+### 1. Customer Service
+**Port:** 8082 | **Status:** ✅ Running
+
+Manages customer information and profiles.
+
+**Features:**
+- CRUD operations for customers
+- REST API with Spring Data REST
+- HATEOAS support
 - H2 in-memory database
-- OpenAPI/Swagger documentation
+- Data projections
+- Actuator endpoints
 
-**Tech Stack:** Spring Boot, Spring Data JPA, Spring GraphQL, H2, Lombok
+**Key Dependencies:**
+- `spring-boot-starter-data-jpa`
+- `spring-boot-starter-data-rest`
+- `spring-boot-starter-web`
+- `spring-cloud-starter-eureka-client`
+- `spring-cloud-starter-config`
 
-[📖 Detailed Documentation](./bank-account-service/README.md)
+**Domain Model:**
+```java
+@Entity
+public class Customer {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private String name;
+    private String email;
+}
+```
 
-### 2. [Future Services]
-More services will be added as the course progresses...
+**Endpoints:**
+- `GET /customers` - List all customers
+- `GET /customers/{id}` - Get customer by ID
+- `POST /customers` - Create customer
+- `PUT /customers/{id}` - Update customer
+- `DELETE /customers/{id}` - Delete customer
 
-## 🏛️ Architecture Patterns
+---
 
-This repository demonstrates various microservices patterns:
+### 2. Inventory Service
+**Port:** 8083 | **Status:** ✅ Running
 
-### Communication Patterns
-- **REST API** - Synchronous HTTP communication
-- **GraphQL** - Flexible query-based API
-- **Event-Driven** - Asynchronous messaging (upcoming)
-- **gRPC** - High-performance RPC (upcoming)
+Manages product inventory and stock.
 
-### Data Management Patterns
-- **Database per Service** - Each service owns its data
-- **CQRS** - Command Query Responsibility Segregation (upcoming)
-- **Event Sourcing** - Audit trail and state reconstruction (upcoming)
-- **Saga Pattern** - Distributed transactions (upcoming)
+**Features:**
+- Product catalog management
+- Stock quantity tracking
+- REST API with Spring Data REST
+- UUID-based product IDs
+- H2 in-memory database
+- Actuator endpoints
 
-### Resilience Patterns
-- **Circuit Breaker** - Fault tolerance (upcoming)
-- **Retry** - Automatic retry with backoff (upcoming)
-- **Timeout** - Request timeout handling (upcoming)
-- **Bulkhead** - Resource isolation (upcoming)
+**Key Dependencies:**
+- `spring-boot-starter-data-jpa`
+- `spring-boot-starter-data-rest`
+- `spring-boot-starter-web`
+- `spring-cloud-starter-eureka-client`
+- `spring-cloud-starter-config`
 
-### Infrastructure Patterns
-- **API Gateway** - Single entry point (upcoming)
-- **Service Discovery** - Dynamic service location (upcoming)
-- **Config Server** - Centralized configuration (upcoming)
-- **Load Balancing** - Request distribution (upcoming)
+**Domain Model:**
+```java
+@Entity
+public class Product {
+    @Id @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
+    private String name;
+    private double price;
+    private int quantity;
+}
+```
+
+**Endpoints:**
+- `GET /products` - List all products
+- `GET /products/{id}` - Get product by ID
+- `POST /products` - Create product
+- `PUT /products/{id}` - Update product
+- `DELETE /products/{id}` - Delete product
+
+---
+
+### 3. Billing Service
+**Port:** 8084 | **Status:** ✅ Running
+
+Manages bills and invoices with inter-service communication.
+
+**Features:**
+- Bill generation and management
+- Product items per bill
+- Integration with Customer Service (via OpenFeign)
+- Integration with Inventory Service (via OpenFeign)
+- HATEOAS support
+- H2 in-memory database
+- Actuator endpoints
+
+**Key Dependencies:**
+- `spring-boot-starter-data-jpa`
+- `spring-boot-starter-data-rest`
+- `spring-boot-starter-hateoas`
+- `spring-cloud-starter-openfeign`
+- `spring-cloud-starter-eureka-client`
+- `spring-cloud-starter-config`
+
+**Domain Model:**
+```java
+@Entity
+public class Bill {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private Date billingDate;
+    private Long customerId;
+    @OneToMany(mappedBy = "bill")
+    private List<ProductItem> productItems;
+    @Transient
+    private Customer customer;
+}
+
+@Entity
+public class ProductItem {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+    private UUID productId;
+    private int quantity;
+    private double price;
+    @ManyToOne
+    private Bill bill;
+    @Transient
+    private Product product;
+}
+```
+
+**Feign Clients:**
+```java
+@FeignClient(name = "customer-service")
+public interface CustomerRestClient {
+    @GetMapping("/customers/{id}")
+    Customer findCustomerById(@PathVariable Long id);
+}
+
+@FeignClient(name = "inventory-service")
+public interface ProductRestClient {
+    @GetMapping("/products/{id}")
+    Product findProductById(@PathVariable UUID id);
+}
+```
+
+**Endpoints:**
+- `GET /bills` - List all bills
+- `GET /bills/{id}` - Get bill by ID with customer and product details
+- `POST /bills` - Create bill
+- `PUT /bills/{id}` - Update bill
+- `DELETE /bills/{id}` - Delete bill
+
+---
 
 ## 💻 Technology Stack
 
 ### Core Technologies
-- **Java 17** - Programming language
+- **Java 21** - Programming language
 - **Spring Boot 3.5.6** - Application framework
+- **Spring Cloud 2025.0.0** - Microservices infrastructure
 - **Maven** - Build and dependency management
 
-### Spring Ecosystem
+### Spring Cloud Components
+- **Eureka Server/Client** - Service discovery
+- **Spring Cloud Config** - Centralized configuration
+- **Spring Cloud Gateway** - API Gateway (WebFlux)
+- **OpenFeign** - Declarative REST clients
+
+### Spring Boot Starters
 - **Spring Data JPA** - Data persistence
-- **Spring Web** - REST API development
-- **Spring GraphQL** - GraphQL API development
-- **Spring Data REST** - HATEOAS REST services
-- **Spring Cloud** - Microservices infrastructure (upcoming)
+- **Spring Data REST** - REST repository exposition
+- **Spring HATEOAS** - Hypermedia-driven APIs
+- **Spring Boot Actuator** - Monitoring and management
+- **Spring Boot DevTools** - Development utilities
 
 ### Databases
-- **H2** - In-memory database for development
-- **PostgreSQL** - Production database (upcoming)
-- **MongoDB** - Document database (upcoming)
+- **H2** - In-memory database for all services
 
-### API & Documentation
-- **SpringDoc OpenAPI** - API documentation
-- **GraphiQL** - GraphQL testing interface
+### Development Tools
+- **Lombok** - Boilerplate code reduction
+- **Spring Boot DevTools** - Hot reload
 
-### DevOps & Tools
-- **Docker** - Containerization (upcoming)
-- **Docker Compose** - Multi-container orchestration (upcoming)
-- **Kubernetes** - Container orchestration (upcoming)
-
-### Testing
-- **JUnit 5** - Unit testing
-- **Mockito** - Mocking framework
-- **Spring Boot Test** - Integration testing
-- **TestContainers** - Integration testing with containers (upcoming)
+---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-- **Java 17** or higher
+- **Java 21** or higher
 - **Maven 3.8+**
 - **Git**
 - **IDE** (IntelliJ IDEA, Eclipse, or VS Code recommended)
-- **Docker** (for containerized deployment - upcoming)
 
 ### Clone the Repository
 
@@ -182,493 +379,387 @@ git clone https://github.com/OtmaneTouhami/microservices.git
 cd microservices
 ```
 
-### Running Individual Services
+### Running the Services
 
-Each microservice can be run independently:
+The services must be started in the following order:
+
+#### 1. Start Discovery Service (Eureka)
+```bash
+cd discovery-service
+mvn spring-boot:run
+```
+Wait until Eureka is fully started (http://localhost:8761)
+
+#### 2. Start Config Service
+```bash
+cd config-service
+mvn spring-boot:run
+```
+Verify at http://localhost:9999/actuator/health
+
+#### 3. Start Business Services
+
+In separate terminals:
 
 ```bash
-cd bank-account-service
+# Customer Service
+cd customer-service
+mvn spring-boot:run
+
+# Inventory Service
+cd inventory-service
+mvn spring-boot:run
+
+# Billing Service
+cd billing-service
 mvn spring-boot:run
 ```
 
-Or using Maven wrapper:
-
+#### 4. Start Gateway Service
 ```bash
-cd bank-account-service
-./mvnw spring-boot:run
+cd gateway-service
+mvn spring-boot:run
 ```
+
+### Verify Services
+
+1. **Eureka Dashboard:** http://localhost:8761
+   - All services should be registered
+
+2. **Actuator Health Checks:**
+   - Customer: http://localhost:8082/actuator/health
+   - Inventory: http://localhost:8083/actuator/health
+   - Billing: http://localhost:8084/actuator/health
+   - Gateway: http://localhost:8888/actuator/health
 
 ### Building Services
 
 ```bash
-# Build a specific service
-cd bank-account-service
+# Build all services from root
 mvn clean install
+
+# Build specific service
+cd customer-service
+mvn clean package
 
 # Skip tests
 mvn clean install -DskipTests
 ```
 
-### Accessing Services
+---
 
-After starting a service, you can access:
+## 🏛️ Architecture Patterns
 
-- **REST API**: `http://localhost:8081/api`
-- **GraphQL**: `http://localhost:8081/graphql`
-- **GraphiQL UI**: `http://localhost:8081/graphiql`
-- **H2 Console**: `http://localhost:8081/h2-console`
-- **OpenAPI Docs**: `http://localhost:8081/swagger-ui.html`
+### 1. Service Discovery Pattern
+**Implementation:** Netflix Eureka
 
-## 📋 Best Practices
+All microservices register themselves with Eureka Server, enabling:
+- Dynamic service discovery
+- Load balancing
+- Health monitoring
+- Fault tolerance
 
-### 1. Service Design Principles
+### 2. API Gateway Pattern
+**Implementation:** Spring Cloud Gateway
 
-#### Single Responsibility
-Each microservice should have a single, well-defined purpose.
+Single entry point for all client requests:
+- Request routing
+- Load balancing across service instances
+- Cross-cutting concerns (auth, logging, rate limiting)
+- Protocol translation
 
-```java
-// ✅ Good - Focused service
-public interface BankAccountService {
-    BankAccountResponseDTO addAccount(BankAccountRequestDTO dto);
-    BankAccountResponseDTO updateAccount(String id, BankAccountRequestDTO dto);
-}
+### 3. Externalized Configuration
+**Implementation:** Spring Cloud Config
 
-// ❌ Avoid - Too many responsibilities
-public interface BankService {
-    void processPayment();
-    void manageLoan();
-    void handleInsurance();
-    // Too many unrelated responsibilities
-}
-```
+Centralized configuration management:
+- Environment-specific configurations (dev, prod)
+- Git-based version control
+- Dynamic refresh without restart
+- Encrypted sensitive data
 
-#### Loose Coupling
-Services should be independent and minimize dependencies.
+### 4. Database per Service
+**Implementation:** H2 per service
 
-```java
-// ✅ Good - Interface-based dependency
-@Service
-public class BankAccountServiceImpl implements BankAccountService {
-    private final BankAccountRepository repository;
-    private final AccountMapper mapper;
-    // Dependencies injected via constructor
-}
-```
+Each microservice has its own database:
+- Data isolation
+- Independent scaling
+- Technology diversity
+- Loose coupling
 
-#### High Cohesion
-Keep related functionality together.
+### 5. Inter-Service Communication
+**Implementation:** OpenFeign + REST
 
-```
-// ✅ Good - Cohesive package structure
-bankaccountservice/
-├── entities/          # Domain models
-├── repositories/      # Data access
-├── services/          # Business logic
-└── web/              # API endpoints
-```
+Declarative REST clients for synchronous communication:
+- Load balancing via Ribbon
+- Service discovery integration
+- Circuit breaker ready (Resilience4j future)
 
-### 2. API Design
+### 6. HATEOAS
+**Implementation:** Spring HATEOAS
 
-#### Use DTOs (Data Transfer Objects)
-Never expose entities directly in APIs.
+Hypermedia-driven APIs:
+- Self-documenting APIs
+- Discoverability
+- Loose coupling between client and server
 
-```java
-// ✅ Good - Using DTOs
-@PostMapping("/api/bankAccounts")
-public BankAccountResponseDTO create(@RequestBody BankAccountRequestDTO request) {
-    return service.addAccount(request);
-}
+---
 
-// ❌ Avoid - Exposing entities
-@PostMapping("/api/bankAccounts")
-public BankAccount create(@RequestBody BankAccount account) {
-    return repository.save(account);
-}
-```
+## ⚙️ Configuration Management
 
-#### RESTful Conventions
-Follow REST principles for resource naming.
+### Local Configuration Files
 
-```
-✅ Good:
-GET    /api/bankAccounts           # List all accounts
-GET    /api/bankAccounts/{id}      # Get specific account
-POST   /api/bankAccounts           # Create account
-PUT    /api/bankAccounts/{id}      # Update account
-DELETE /api/bankAccounts/{id}      # Delete account
+Each service has its `application.properties`:
 
-❌ Avoid:
-GET  /api/getAllAccounts
-POST /api/createAccount
-POST /api/updateAccount
-```
-
-#### Versioning
-Always version your APIs.
-
-```java
-@RestController
-@RequestMapping("/api/v1/bankAccounts")
-public class BankAccountRestController {
-    // v1 implementation
-}
-```
-
-### 3. Data Management
-
-#### Database per Service
-Each microservice owns its database.
-
-```yaml
-# ✅ Good - Separate databases
-bank-account-service:
-  datasource.url: jdbc:h2:mem:accounts-db
-
-customer-service:
-  datasource.url: jdbc:h2:mem:customers-db
-```
-
-#### Use Projections
-Limit data exposure with projections.
-
-```java
-public interface AccountProjection {
-    String getId();
-    Double getBalance();
-    String getCurrency();
-}
-```
-
-### 4. Error Handling
-
-#### Centralized Exception Handling
-
-```java
-@RestControllerAdvice
-public class GlobalExceptionHandler {
-    
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(EntityNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND)
-            .body(new ErrorResponse(ex.getMessage()));
-    }
-}
-```
-
-#### GraphQL Error Handling
-
-```java
-@Component
-public class GraphQLExceptionHandler extends DataFetcherExceptionResolverAdapter {
-    @Override
-    protected GraphQLError resolveToSingleError(Throwable ex, DataFetchingEnvironment env) {
-        return GraphQLError.newError()
-            .message(ex.getMessage())
-            .build();
-    }
-}
-```
-
-### 5. Configuration Management
-
-#### Externalize Configuration
-Use `application.properties` or `application.yml`.
-
+**Customer Service:**
 ```properties
-# Application
-spring.application.name=bank-account-service
-server.port=8081
-
-# Database
-spring.datasource.url=jdbc:h2:mem:accounts-db
-
-# Features
-spring.graphql.graphiql.enabled=true
+spring.application.name=customer-service
+server.port=8082
+spring.config.import=optional:configserver:http://localhost:9999
 ```
 
-#### Profile-Specific Configuration
+### Centralized Configuration (config-repo/)
 
+**application.properties** (Global):
 ```properties
-# application-dev.properties
-spring.jpa.show-sql=true
-spring.h2.console.enabled=true
-
-# application-prod.properties
-spring.jpa.show-sql=false
-spring.h2.console.enabled=false
+eureka.client.service-url.defaultZone=http://localhost:8761/eureka
+eureka.instance.prefer-ip-address=true
+management.endpoints.web.exposure.include=*
+spring.cloud.discovery.enabled=true
+global.params.p1=12
+global.params.p2=14
 ```
 
-### 6. Code Quality
+**Service-specific configs:**
+- `customer-service.properties`
+- `customer-service-dev.properties`
+- `customer-service-prod.properties`
+- `inventory-service.properties`
+- `billing-service.properties`
+- `gateway-service.properties`
 
-#### Use Lombok for Boilerplate Reduction
+### Configuration Refresh
 
-```java
-@Entity
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class BankAccount {
-    @Id
-    private String id;
-    private Double balance;
-    // Getters, setters, constructors auto-generated
-}
+Refresh configuration without restart:
+```bash
+POST http://localhost:8082/actuator/refresh
 ```
 
-#### Dependency Injection Best Practices
+---
 
-```java
-// ✅ Good - Constructor injection (immutable)
-@Service
-public class BankAccountServiceImpl implements BankAccountService {
-    private final BankAccountRepository repository;
-    private final AccountMapper mapper;
-    
-    public BankAccountServiceImpl(BankAccountRepository repository, 
-                                   AccountMapper mapper) {
-        this.repository = repository;
-        this.mapper = mapper;
-    }
-}
+## 📖 API Documentation
 
-// ❌ Avoid - Field injection (harder to test)
-@Service
-public class BankAccountServiceImpl {
-    @Autowired
-    private BankAccountRepository repository;
-}
+### Customer Service (Port 8082)
+
+#### Get All Customers
+```bash
+curl http://localhost:8082/customers
 ```
 
-### 7. Testing
-
-#### Write Tests at Multiple Levels
-
-```java
-// Unit Test
-@Test
-void shouldAddAccount() {
-    // Arrange
-    BankAccountRequestDTO request = new BankAccountRequestDTO();
-    when(repository.save(any())).thenReturn(account);
-    
-    // Act
-    BankAccountResponseDTO response = service.addAccount(request);
-    
-    // Assert
-    assertNotNull(response);
-}
-
-// Integration Test
-@SpringBootTest
-@AutoConfigureMockMvc
-class BankAccountRestControllerIntegrationTest {
-    @Test
-    void shouldCreateAccount() throws Exception {
-        mockMvc.perform(post("/api/bankAccounts")
-            .contentType(MediaType.APPLICATION_JSON)
-            .content(objectMapper.writeValueAsString(request)))
-            .andExpect(status().isOk());
-    }
-}
+#### Create Customer
+```bash
+curl -X POST http://localhost:8082/customers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "John Doe",
+    "email": "john.doe@example.com"
+  }'
 ```
 
-### 8. Documentation
-
-#### Code Documentation
-
-```java
-/**
- * Service for managing bank accounts.
- * Provides operations for creating, updating, and retrieving accounts.
- *
- * @author Otmane Touhami
- * @version 1.0
- * @since 2025-10-12
- */
-@Service
-public class BankAccountServiceImpl implements BankAccountService {
-    
-    /**
-     * Creates a new bank account.
-     *
-     * @param dto the account creation request
-     * @return the created account details
-     * @throws IllegalArgumentException if the request is invalid
-     */
-    public BankAccountResponseDTO addAccount(BankAccountRequestDTO dto) {
-        // Implementation
-    }
-}
+#### Get Customer by ID
+```bash
+curl http://localhost:8082/customers/1
 ```
 
-#### API Documentation with OpenAPI
+---
 
-```java
-@RestController
-@RequestMapping("/api/v1/bankAccounts")
-@Tag(name = "Bank Accounts", description = "Bank account management APIs")
-public class BankAccountRestController {
-    
-    @Operation(summary = "Get all bank accounts")
-    @ApiResponses(value = {
-        @ApiResponse(responseCode = "200", description = "Successfully retrieved list"),
-        @ApiResponse(responseCode = "500", description = "Internal server error")
-    })
-    @GetMapping
-    public List<BankAccount> getAllAccounts() {
-        return repository.findAll();
-    }
-}
+### Inventory Service (Port 8083)
+
+#### Get All Products
+```bash
+curl http://localhost:8083/products
 ```
+
+#### Create Product
+```bash
+curl -X POST http://localhost:8083/products \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Laptop",
+    "price": 999.99,
+    "quantity": 50
+  }'
+```
+
+---
+
+### Billing Service (Port 8084)
+
+#### Get All Bills
+```bash
+curl http://localhost:8084/bills
+```
+
+#### Get Bill with Customer & Product Details
+```bash
+curl http://localhost:8084/bills/1
+```
+*Returns bill with embedded customer and product information via Feign clients*
+
+---
+
+### Via Gateway (Port 8888)
+
+All services can be accessed through the gateway:
+
+```bash
+# Customer Service
+curl http://localhost:8888/customer-service/customers
+
+# Inventory Service
+curl http://localhost:8888/inventory-service/products
+
+# Billing Service
+curl http://localhost:8888/billing-service/bills
+```
+
+---
+
+## 📋 Best Practices Implemented
+
+### 1. Service Independence
+✅ Each service has its own database
+✅ Services can be deployed independently
+✅ No direct database coupling
+
+### 2. Externalized Configuration
+✅ Configuration in Config Server
+✅ Environment-specific configs
+✅ No hardcoded values
+
+### 3. Service Discovery
+✅ Dynamic service registration
+✅ No hardcoded URLs
+✅ Automatic load balancing
+
+### 4. API Design
+✅ RESTful conventions
+✅ HATEOAS for discoverability
+✅ Proper HTTP methods and status codes
+✅ Data projections
+
+### 5. Inter-Service Communication
+✅ OpenFeign for declarative clients
+✅ Service discovery integration
+✅ Loose coupling
+
+### 6. Monitoring & Observability
+✅ Actuator endpoints enabled
+✅ Health checks
+✅ Metrics exposure
+✅ Eureka dashboard
+
+### 7. Code Quality
+✅ Lombok for cleaner code
+✅ JPA entities with proper relationships
+✅ Transient fields for external data
+✅ Proper package structure
+
+---
 
 ## 🛠️ Development Guidelines
+
+### Code Structure Convention
+
+```
+service-name/
+├── src/
+│   ├── main/
+│   │   ├── java/
+│   │   │   └── ma/enset/[service]/
+│   │   │       ├── entities/          # JPA entities
+│   │   │       ├── repositories/      # Spring Data repositories
+│   │   │       ├── feign/             # Feign clients (if needed)
+│   │   │       ├── entities/models/   # External models
+│   │   │       ├── config/            # Configuration classes
+│   │   │       └── [Service]Application.java
+│   │   └── resources/
+│   │       └── application.properties
+│   └── test/
+├── pom.xml
+└── README.md
+```
+
+### Naming Conventions
+
+- **Entities:** `Customer`, `Product`, `Bill`
+- **Repositories:** `CustomerRepository`, `ProductRepository`
+- **Feign Clients:** `CustomerRestClient`, `ProductRestClient`
+- **Services:** `customer-service`, `inventory-service`
 
 ### Git Workflow
 
 ```bash
-# Create feature branch
+# Feature branch
 git checkout -b feature/service-name
 
 # Commit with meaningful messages
-git commit -m "feat(bank-account): add GraphQL mutation for account update"
+git commit -m "feat(customer-service): add email validation"
 
-# Push to remote
+# Push and create PR
 git push origin feature/service-name
 ```
 
-### Commit Message Convention
-
-Follow [Conventional Commits](https://www.conventionalcommits.org/):
-
-```
-feat(service): add new feature
-fix(service): bug fix
-docs(service): documentation update
-refactor(service): code refactoring
-test(service): add tests
-chore(service): maintenance tasks
-```
-
-### Branch Naming
-
-```
-feature/service-name       # New features
-bugfix/issue-description   # Bug fixes
-hotfix/critical-issue      # Critical fixes
-docs/documentation-update  # Documentation
-refactor/code-improvement  # Refactoring
-```
-
-## 📖 API Documentation
-
-### REST API Examples
-
-#### Get All Bank Accounts
-```bash
-curl -X GET http://localhost:8081/api/bankAccounts
-```
-
-#### Create Bank Account
-```bash
-curl -X POST http://localhost:8081/api/bankAccounts \
-  -H "Content-Type: application/json" \
-  -d '{
-    "balance": 5000.0,
-    "currency": "EUR",
-    "type": "CURRENT_ACCOUNT"
-  }'
-```
-
-#### Update Bank Account
-```bash
-curl -X PUT http://localhost:8081/api/bankAccounts/{id} \
-  -H "Content-Type: application/json" \
-  -d '{
-    "balance": 7500.0,
-    "currency": "USD"
-  }'
-```
-
-### GraphQL Examples
-
-#### Query All Accounts
-```graphql
-query {
-  accountList {
-    id
-    balance
-    currency
-    type
-    createdAt
-    customer {
-      name
-    }
-  }
-}
-```
-
-#### Create Account Mutation
-```graphql
-mutation {
-  addAccount(bankAccount: {
-    balance: 5000.0
-    currency: "EUR"
-    type: "SAVING_ACCOUNT"
-  }) {
-    id
-    balance
-    currency
-    type
-  }
-}
-```
-
-#### Update Account Mutation
-```graphql
-mutation {
-  updateAccount(
-    id: "account-id-here"
-    bankAccount: {
-      balance: 7500.0
-      currency: "USD"
-    }
-  ) {
-    id
-    balance
-    currency
-  }
-}
-```
+---
 
 ## 🧪 Testing
 
 ### Running Tests
 
 ```bash
-# Run all tests
+# All services
 mvn test
 
-# Run tests with coverage
+# Specific service
+cd customer-service
+mvn test
+
+# With coverage
 mvn test jacoco:report
-
-# Run specific test class
-mvn test -Dtest=BankAccountServiceTest
-
-# Run integration tests
-mvn verify
 ```
 
-### Test Coverage Goals
-- **Unit Tests**: 80%+ coverage
-- **Integration Tests**: Critical paths covered
-- **E2E Tests**: Happy paths and error scenarios
+### Test Categories
+- **Unit Tests:** Business logic testing
+- **Integration Tests:** Repository and REST endpoint testing
+- **Contract Tests:** Inter-service communication (future)
+
+---
+
+## 📚 Resources
+
+### Official Documentation
+- [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/)
+- [Spring Cloud Documentation](https://spring.io/projects/spring-cloud)
+- [Spring Data JPA](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/)
+- [Spring Cloud Netflix](https://spring.io/projects/spring-cloud-netflix)
+- [Spring Cloud Config](https://spring.io/projects/spring-cloud-config)
+- [Spring Cloud Gateway](https://spring.io/projects/spring-cloud-gateway)
+- [OpenFeign](https://spring.io/projects/spring-cloud-openfeign)
+
+### Microservices Patterns
+- [Microservices.io](https://microservices.io/) - Pattern catalog
+- [12 Factor App](https://12factor.net/) - Best practices
+- [Martin Fowler - Microservices](https://martinfowler.com/articles/microservices.html)
+
+### Books
+- "Building Microservices" by Sam Newman
+- "Microservices Patterns" by Chris Richardson
+- "Spring Microservices in Action" by John Carnell
+
+---
 
 ## 🤝 Contributing
 
-We welcome contributions from students and collaborators!
-
-### How to Contribute
+Contributions are welcome! Please follow these guidelines:
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
@@ -676,42 +767,15 @@ We welcome contributions from students and collaborators!
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-### Code Review Checklist
-
-- [ ] Code follows project structure conventions
-- [ ] All tests pass
-- [ ] New features have tests
-- [ ] Documentation is updated
-- [ ] Commit messages follow convention
-- [ ] No sensitive data committed
-
-## 📚 Resources
-
-### Official Documentation
-- [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/)
-- [Spring Data JPA](https://docs.spring.io/spring-data/jpa/docs/current/reference/html/)
-- [Spring GraphQL](https://docs.spring.io/spring-graphql/docs/current/reference/html/)
-- [Spring Cloud](https://spring.io/projects/spring-cloud)
-
-### Microservices Patterns
-- [Microservices.io](https://microservices.io/)
-- [Martin Fowler - Microservices](https://martinfowler.com/articles/microservices.html)
-- [12 Factor App](https://12factor.net/)
-
-### Books
-- "Building Microservices" by Sam Newman
-- "Microservices Patterns" by Chris Richardson
-- "Domain-Driven Design" by Eric Evans
-
-### Online Courses
-- [Spring Academy](https://spring.academy/)
-- [Baeldung Microservices Guides](https://www.baeldung.com/spring-microservices-guide)
+---
 
 ## 📧 Contact
 
-**Course Instructor**: ENSET Mohammadia  
-**Repository Maintainer**: Otmane Touhami  
-**GitHub**: [@OtmaneTouhami](https://github.com/OtmaneTouhami)
+**Repository Maintainer:** Otmane Touhami  
+**GitHub:** [@OtmaneTouhami](https://github.com/OtmaneTouhami)  
+**Course:** Systèmes Parallèles et Distribués - ENSET Mohammadia
+
+---
 
 ## 📝 License
 
@@ -720,9 +784,9 @@ This project is created for educational purposes as part of the Microservices co
 ---
 
 <p align="center">
-  <strong>🎓 Built with ❤️ by ENSET Mohammadia Student Otmane TOUHAMI</strong>
+  <strong>🎓 Built with ❤️ at ENSET Mohammadia by Otmane TOUHAMI</strong>
 </p>
 
 <p align="center">
-  <sub>Last Updated: October 2025</sub>
+  <sub>Last Updated: October 28, 2025</sub>
 </p>
