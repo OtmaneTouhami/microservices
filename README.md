@@ -71,6 +71,10 @@ The project follows a microservices architecture pattern with the following comp
   [H2 DB]  [H2 DB]   [H2 DB]      ◄── Database per Service
 ```
 
+### Architecture Diagram
+
+![Application Architecture](screenshots/app-architecture.png)
+
 ## 📁 Repository Structure
 
 ```
@@ -83,14 +87,15 @@ microservices/
 │   ├── inventory-service.properties   # Inventory service config
 │   ├── billing-service.properties     # Billing service config
 │   ├── gateway-service.properties     # Gateway service config
-│   ├── *-dev.properties              # Dev environment configs
-│   └── *-prod.properties             # Prod environment configs
+│   ├── *-dev.properties               # Dev environment configs
+│   └── *-prod.properties              # Prod environment configs
 ├── discovery-service/                 # Eureka Server (Port 8761)
 ├── config-service/                    # Config Server (Port 9999)
 ├── gateway-service/                   # API Gateway (Port 8888)
 ├── customer-service/                  # Customer microservice (Port 8082)
 ├── inventory-service/                 # Product inventory (Port 8083)
-└── billing-service/                   # Billing & invoicing (Port 8084)
+├── billing-service/                   # Billing & invoicing (Port 8084)
+└── frontend/                          # Angular frontend (Port 4200)
 ```
 
 ## 🔧 Infrastructure Services
@@ -734,7 +739,31 @@ mvn test jacoco:report
 
 ---
 
-## 📚 Resources
+## �️ Frontend Screenshots
+
+The Angular frontend provides a modern, responsive interface for managing the microservices data.
+
+### Customer Management
+
+![Customers List](screenshots/customers-ui.png)
+
+![Add Customer Modal](screenshots/add-customer-ui.png)
+
+### Product Inventory
+
+![Products List](screenshots/products-ui.png)
+
+![Edit Product Modal](screenshots/edit-product-ui.png)
+
+### Billing Management
+
+![Bills List](screenshots/bills-ui.png)
+
+![Bill Details with Items](screenshots/manage-bill-ui.png)
+
+---
+
+## �📚 Resources
 
 ### Official Documentation
 - [Spring Boot Documentation](https://docs.spring.io/spring-boot/docs/current/reference/html/)
