@@ -1,0 +1,266 @@
+<header class="header">
+    <h1 class="header-title">Bills</h1>
+</header>
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Billing History</h2>
+            <p class="text-muted text-sm">View and manage invoices</p>
+        </div>
+        <button class="btn btn-primary" (click)="openModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+            </svg>
+            Create Bill
+        </button>
+    </div>
+
+    @if (loading()) {
+    <div class="flex justify-center items-center" style="padding: 3rem;">
+        <div class="spinner"></div>
+    </div>
+    } @else if (bills().length === 0) {
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon">🧾</div>
+            <div class="empty-state-title">No bills yet</div>
+            <p>Get started by creating your first bill.</p>
+            <button class="btn btn-primary mt-4" (click)="openModal()">Create Bill</button>
+        </div>
+    </div>
+    } @else {
+    <div class="card">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Bill ID</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (bill of bills(); track bill.id) {
+                    <tr>
+                        <td>
+                            <span class="badge badge-primary">#{{ bill.id }}</span>
+                        </td>
+                        <td>{{ bill.billingDate | date:'medium' }}</td>
+                        <td>
+                            <span class="badge badge-outline">{{ getCustomerName(bill.customerId) }}</span>
+                        </td>
+                        <td class="text-right">
+                            <div class="flex justify-end gap-2">
+                                <button class="btn btn-secondary btn-sm" (click)="viewBillDetails(bill)">
+                                    View
+                                </button>
+                                <button class="btn btn-ghost btn-sm" (click)="openModal(bill)">
+                                    Edit
+                                </button>
+                                <button class="btn btn-destructive btn-sm" (click)="deleteBill(bill)">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    }
+
+    <!-- Create/Edit Bill Modal -->
+    @if (showModal()) {
+    <div class="modal-overlay" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ editingBill() ? 'Edit Bill' : 'Create Bill' }}</h3>
+                <p class="modal-description">{{ editingBill() ? 'Update bill information' : 'Create a new invoice' }}
+                </p>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label class="label" for="customer">Customer</label>
+                    <select id="customer" class="input" [value]="formData().customerId"
+                        (change)="updateFormField('customerId', +$any($event.target).value)">
+                        <option value="0" disabled>Select a customer</option>
+                        @for (customer of customers(); track customer.id) {
+                        <option [value]="customer.id">{{ customer.name }} ({{ customer.email }})</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label" for="date">Billing Date</label>
+                    <input type="datetime-local" id="date" class="input"
+                        [value]="formData().billingDate | date:'yyyy-MM-ddTHH:mm'"
+                        (input)="updateFormField('billingDate', $any($event.target).value)" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" (click)="closeModal()">Cancel</button>
+                <button class="btn btn-primary" (click)="saveBill()" [disabled]="saving() || !formData().customerId">
+                    {{ saving() ? 'Saving...' : (editingBill() ? 'Update' : 'Create') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Bill Details Modal -->
+    @if (selectedBill()) {
+    <div class="modal-overlay" (click)="closeBillDetails()">
+        <div class="modal" style="max-width: 50rem;" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <div class="flex justify-between items-center w-full">
+                    <div>
+                        <h3 class="modal-title">Bill #{{ selectedBill()?.id }}</h3>
+                        <p class="modal-description">{{ selectedBill()?.billingDate | date:'fullDate' }}</p>
+                    </div>
+                    <button class="btn btn-primary btn-sm" (click)="openAddItemModal()">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                            stroke="currentColor" stroke-width="2">
+                            <path d="M5 12h14" />
+                            <path d="M12 5v14" />
+                        </svg>
+                        Add Item
+                    </button>
+                </div>
+            </div>
+            <div class="modal-content">
+                @if (loadingDetails()) {
+                <div class="flex justify-center items-center" style="padding: 2rem;">
+                    <div class="spinner"></div>
+                </div>
+                } @else {
+                <!-- Customer Info -->
+                <div class="card mb-4" style="background: hsl(var(--muted));">
+                    <div class="card-content" style="padding: 1rem;">
+                        <div class="text-sm text-muted mb-1">Customer</div>
+                        @if (selectedBill()?.customer) {
+                        <div class="font-semibold">{{ selectedBill()?.customer?.name }}</div>
+                        <div class="text-sm text-muted">{{ selectedBill()?.customer?.email }}</div>
+                        } @else {
+                        <div class="text-muted">{{ getCustomerName(selectedBill()!.customerId) }}</div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Product Items -->
+                <div class="flex justify-between items-center mb-2">
+                    <div class="text-sm font-medium">Items</div>
+                </div>
+                @if (selectedBill()?.productItems && selectedBill()!.productItems!.length > 0) {
+                <div class="table-container">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-right">Qty</th>
+                                <th class="text-right">Price</th>
+                                <th class="text-right">Total</th>
+                                <th class="text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (item of selectedBill()?.productItems; track item.id) {
+                            <tr>
+                                <td>
+                                    @if (item.product) {
+                                    {{ item.product.name }}
+                                    } @else {
+                                    <span class="text-muted">Product</span>
+                                    }
+                                </td>
+                                <td class="text-right">{{ item.quantity }}</td>
+                                <td class="text-right">{{ item.unitPrice | currency:'USD' }}</td>
+                                <td class="text-right font-medium">{{ item.quantity * item.unitPrice | currency:'USD' }}
+                                </td>
+                                <td class="text-right">
+                                    <button class="btn btn-destructive btn-sm" (click)="removeItem(item)">
+                                        Remove
+                                    </button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-right font-semibold">Total</td>
+                                <td class="text-right font-semibold">{{ calculateTotal(selectedBill()!) | currency:'USD'
+                                    }}</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                } @else {
+                <div class="empty-state" style="padding: 2rem;">
+                    <div class="empty-state-icon">📦</div>
+                    <div class="empty-state-title">No items yet</div>
+                    <p class="text-sm text-muted">Add products to this bill</p>
+                    <button class="btn btn-primary btn-sm mt-2" (click)="openAddItemModal()">Add Item</button>
+                </div>
+                }
+                }
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" (click)="closeBillDetails()">Close</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Add Item Modal -->
+    @if (showAddItemModal()) {
+    <div class="modal-overlay" (click)="closeAddItemModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Item to Bill</h3>
+                <p class="modal-description">Select a product and quantity</p>
+            </div>
+            <div class="modal-content">
+                @if (itemError()) {
+                <div class="alert alert-error mb-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                        stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10" />
+                        <path d="m15 9-6 6" />
+                        <path d="m9 9 6 6" />
+                    </svg>
+                    <span>{{ itemError() }}</span>
+                </div>
+                }
+                <div class="form-group">
+                    <label class="label" for="product">Product</label>
+                    <select id="product" class="input" [value]="itemFormData().productId"
+                        (change)="updateItemFormField('productId', $any($event.target).value)">
+                        <option value="" disabled>Select a product</option>
+                        @for (product of getAvailableProducts(); track product.id) {
+                        <option [value]="product.id">
+                            {{ product.name }} - {{ product.price | currency:'USD' }} ({{ product.quantity }} in stock)
+                        </option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="label" for="quantity">Quantity</label>
+                    <input type="number" id="quantity" class="input" [value]="itemFormData().quantity"
+                        (input)="updateItemFormField('quantity', +$any($event.target).value)" min="1" placeholder="1" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" (click)="closeAddItemModal()">Cancel</button>
+                <button class="btn btn-primary" (click)="addItem()"
+                    [disabled]="savingItem() || !itemFormData().productId || itemFormData().quantity < 1">
+                    {{ savingItem() ? 'Adding...' : 'Add Item' }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

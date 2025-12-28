@@ -1,0 +1,119 @@
+<header class="header">
+    <h1 class="header-title">Products</h1>
+</header>
+
+<div class="page-content">
+    <div class="page-header">
+        <div>
+            <h2 class="page-title">Product Inventory</h2>
+            <p class="text-muted text-sm">Manage your product catalog</p>
+        </div>
+        <button class="btn btn-primary" (click)="openModal()">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14" />
+                <path d="M12 5v14" />
+            </svg>
+            Add Product
+        </button>
+    </div>
+
+    @if (loading()) {
+    <div class="flex justify-center items-center" style="padding: 3rem;">
+        <div class="spinner"></div>
+    </div>
+    } @else if (products().length === 0) {
+    <div class="card">
+        <div class="empty-state">
+            <div class="empty-state-icon">📦</div>
+            <div class="empty-state-title">No products yet</div>
+            <p>Start by adding your first product to the inventory.</p>
+            <button class="btn btn-primary mt-4" (click)="openModal()">Add Product</button>
+        </div>
+    </div>
+    } @else {
+    <div class="card">
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Price</th>
+                        <th>Quantity</th>
+                        <th>Status</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (product of products(); track product.id) {
+                    <tr>
+                        <td>
+                            <div class="font-medium">{{ product.name }}</div>
+                            <div class="text-xs text-muted">{{ product.id }}</div>
+                        </td>
+                        <td class="font-medium">{{ product.price | currency:'USD' }}</td>
+                        <td>{{ product.quantity }}</td>
+                        <td>
+                            @if (product.quantity > 10) {
+                            <span class="badge badge-success">In Stock</span>
+                            } @else if (product.quantity > 0) {
+                            <span class="badge badge-default">Low Stock</span>
+                            } @else {
+                            <span class="badge badge-destructive">Out of Stock</span>
+                            }
+                        </td>
+                        <td class="text-right">
+                            <div class="flex justify-end gap-2">
+                                <button class="btn btn-ghost btn-sm" (click)="openModal(product)">
+                                    Edit
+                                </button>
+                                <button class="btn btn-destructive btn-sm" (click)="deleteProduct(product)">
+                                    Delete
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    }
+
+    <!-- Modal -->
+    @if (showModal()) {
+    <div class="modal-overlay" (click)="closeModal()">
+        <div class="modal" (click)="$event.stopPropagation()">
+            <div class="modal-header">
+                <h3 class="modal-title">{{ editingProduct() ? 'Edit Product' : 'Add Product' }}</h3>
+                <p class="modal-description">{{ editingProduct() ? 'Update product details' : 'Add a new product to
+                    inventory' }}</p>
+            </div>
+            <div class="modal-content">
+                <div class="form-group">
+                    <label class="label" for="name">Product Name</label>
+                    <input type="text" id="name" class="input" [value]="formData().name"
+                        (input)="updateFormField('name', $any($event.target).value)" placeholder="Enter product name" />
+                </div>
+                <div class="form-group">
+                    <label class="label" for="price">Price (USD)</label>
+                    <input type="number" id="price" class="input" [value]="formData().price"
+                        (input)="updateFormField('price', +$any($event.target).value)" placeholder="0.00" step="0.01"
+                        min="0" />
+                </div>
+                <div class="form-group">
+                    <label class="label" for="quantity">Quantity</label>
+                    <input type="number" id="quantity" class="input" [value]="formData().quantity"
+                        (input)="updateFormField('quantity', +$any($event.target).value)" placeholder="0" min="0" />
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" (click)="closeModal()">Cancel</button>
+                <button class="btn btn-primary" (click)="saveProduct()" [disabled]="saving()">
+                    {{ saving() ? 'Saving...' : (editingProduct() ? 'Update' : 'Create') }}
+                </button>
+            </div>
+        </div>
+    </div>
+    }
+</div>
