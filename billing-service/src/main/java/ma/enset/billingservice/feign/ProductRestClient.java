@@ -5,6 +5,8 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.UUID;
 
@@ -16,4 +18,10 @@ public interface ProductRestClient {
 
     @GetMapping("/api/products")
     PagedModel<Product> getProducts();
+
+    @PostMapping("/inventory/products/{id}/update-quantity")
+    Product updateQuantity(@PathVariable("id") UUID id, @RequestParam("delta") int delta);
+
+    @GetMapping("/inventory/products/{id}/check-availability")
+    Boolean checkAvailability(@PathVariable("id") UUID id, @RequestParam("quantity") int quantity);
 }
