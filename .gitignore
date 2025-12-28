@@ -42,3 +42,11 @@ build/
 config-repo/
 
 openapi/
+
+/report/*.aux
+/report/*.fls
+/report/*.log
+/report/*.out
+/report/*.toc
+/report/*.aux
+/report/*.fdb*
